@@ -1,11 +1,29 @@
-node_modules/
-.DS_Store
-*.log
-*.swp
-*.swo
-*~
-.vscode/
-.idea/
-dist/
-build/
-
+# Build directories
+   build/
+   *.o
+   *.a
+   *.so
+   
+   # CMake
+   CMakeCache.txt
+   CMakeFiles/
+   cmake_install.cmake
+   Makefile
+   
+   # IDE
+   .idea/
+   .vscode/
+   *.swp
+   *.swo
+   *~
+   
+   # OS
+   .DS_Store
+   Thumbs.db
+   
+   # SDK (don't commit SDK)
+   remarkable-sdk/
+   env-setup.sh
+   EOF
+EQF
+EQF
