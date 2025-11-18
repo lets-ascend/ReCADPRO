@@ -1,0 +1,18 @@
+{
+  "name": "remarkable-drafting-pro",
+  "version": "1.0.0",
+  "description": "Native Qt Quick/QML + C++ drafting application for reMarkable Paper Pro",
+  "keywords": [
+    "remarkable",
+    "paper-pro",
+    "drafting",
+    "drawing",
+    "qt",
+    "qml",
+    "cpp",
+    "e-paper"
+  ],
+  "author": "",
+  "license": "MIT",
+  "note": "This is a native Qt Quick application. Build using CMake, not npm. See README.md for build instructions."
+}
