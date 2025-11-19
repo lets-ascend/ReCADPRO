@@ -5,6 +5,40 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Use Qt5 for reMarkable SDK compatibility
+# Try multiple methods to find Qt5
+
+# Method 1: Use QTDIR if set by SDK
+if(DEFINED ENV{QTDIR})
+    set(CMAKE_PREFIX_PATH "${CMAKE_PREFIX_PATH};$ENV{QTDIR}")
+    message(STATUS "Using QTDIR: $ENV{QTDIR}")
+endif()
+
+# Method 2: Use OECORE_TARGET_SYSROOT (common in Yocto SDKs)
+if(DEFINED ENV{OECORE_TARGET_SYSROOT})
+    set(CMAKE_PREFIX_PATH "${CMAKE_PREFIX_PATH};$ENV{OECORE_TARGET_SYSROOT}/usr")
+    message(STATUS "Using OECORE_TARGET_SYSROOT: $ENV{OECORE_TARGET_SYSROOT}/usr")
+endif()
+
+# Method 3: Try common SDK paths
+set(COMMON_SDK_PATHS
+    "/opt/codex/ferrari/5.2.96-dirty/sysroots/cortexa53-crypto-remarkable-linux/usr"
+    "/opt/codex/ferrari/5.2.96-dirty/sysroots/aarch64-remarkable-linux/usr"
+    "$ENV{HOME}/remarkable-sdk/sysroots/cortexa53-crypto-remarkable-linux/usr"
+)
+
+foreach(SDK_PATH ${COMMON_SDK_PATHS})
+    if(EXISTS "${SDK_PATH}/lib/cmake/Qt5/Qt5Config.cmake")
+        set(CMAKE_PREFIX_PATH "${CMAKE_PREFIX_PATH};${SDK_PATH}")
+        message(STATUS "Found Qt5 at: ${SDK_PATH}")
+        break()
+    endif()
+endforeach()
+
+# Set CMAKE_PREFIX_PATH explicitly if provided via command line
+if(CMAKE_PREFIX_PATH)
+    message(STATUS "CMAKE_PREFIX_PATH: ${CMAKE_PREFIX_PATH}")
+endif()
+
 find_package(Qt5 REQUIRED COMPONENTS Quick Core Gui Qml QuickControls2)
 
 set(CMAKE_AUTOMOC ON)

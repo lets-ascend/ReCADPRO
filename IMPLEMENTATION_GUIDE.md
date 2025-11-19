@@ -22,8 +22,7 @@ This guide will get you from a fresh Ubuntu VM to a running ReCADPro app on your
 ### 1.1 Update System
 
 ```bash
-sudo apt update
-sudo apt upgrade -y
+sudo apt updat
 ```
 
 ### 1.2 Install Essential Build Tools
@@ -112,14 +111,45 @@ chmod +x meta-toolchain-remarkable-*.sh
 ```
 
 **Follow prompts:**
-- Press Enter to accept default installation path (`~/remarkable-sdk`)
+- The installer will ask where to install the SDK
+- **Default is usually `~/remarkable-sdk`** but it may install elsewhere (like `/opt/codex/ferrari/...`)
+- **Note the installation path** - you'll need it later!
 - Wait for installation to complete
 
-### 3.3 Verify SDK Installation
+### 3.3 Find Your SDK Installation Path
+
+After installation, find where the SDK was installed:
 
 ```bash
-# Source the SDK environment
-source ~/remarkable-sdk/environment-setup-cortexa53-crypto-remarkable-linux
+# The SDK installer usually tells you the path
+# Look for output like:
+# "SDK installed to: /opt/codex/ferrari/5.2.96-dirty"
+# or
+# "SDK installed to: /home/USER/remarkable-sdk"
+
+# Find the environment setup file:
+find ~ -name "environment-setup-cortexa53-crypto-remarkable-linux" 2>/dev/null
+# or
+find /opt -name "environment-setup-cortexa53-crypto-remarkable-linux" 2>/dev/null
+
+# Common locations:
+# - ~/remarkable-sdk/environment-setup-cortexa53-crypto-remarkable-linux
+# - /opt/codex/ferrari/[VERSION]/environment-setup-cortexa53-crypto-remarkable-linux
+```
+
+**Write down your SDK path!** You'll need it for every build.
+
+### 3.4 Verify SDK Installation
+
+```bash
+# Source the SDK environment (use YOUR actual path!)
+# Example paths:
+# source ~/remarkable-sdk/environment-setup-cortexa53-crypto-remarkable-linux
+# OR
+# source /opt/codex/ferrari/5.2.96-dirty/environment-setup-cortexa53-crypto-remarkable-linux
+
+# Replace with YOUR actual path:
+source /path/to/your/sdk/environment-setup-cortexa53-crypto-remarkable-linux
 
 # Verify cross-compiler
 $CC --version
@@ -161,14 +191,41 @@ git init
 
 ### 5.1 Source SDK Environment
 
+**⚠️ CRITICAL FIRST STEP**: You MUST source the SDK environment before running cmake!
+
+**First, find your SDK path** (if you don't know it):
 ```bash
-# Always source SDK before building
-source ~/remarkable-sdk/environment-setup-cortexa53-crypto-remarkable-linux
+# Find the environment setup file
+find ~ -name "environment-setup-cortexa53-crypto-remarkable-linux" 2>/dev/null
+find /opt -name "environment-setup-cortexa53-crypto-remarkable-linux" 2>/dev/null
+```
+
+**Common SDK paths:**
+- `~/remarkable-sdk/environment-setup-cortexa53-crypto-remarkable-linux`
+- `/opt/codex/ferrari/[VERSION]/environment-setup-cortexa53-crypto-remarkable-linux`
+
+**Then source it** (replace with YOUR actual path):
+```bash
+# Example: If SDK is at /opt/codex/ferrari/5.2.96-dirty/
+source /opt/codex/ferrari/5.2.96-dirty/environment-setup-cortexa53-crypto-remarkable-linux
+
+# OR if SDK is at ~/remarkable-sdk/
+# source ~/remarkable-sdk/environment-setup-cortexa53-crypto-remarkable-linux
 
 # Verify you're in SDK environment
 echo $CC
 # Should show: arm-remarkable-linux-gnueabi-gcc
+
+# Verify Qt5 is available
+qmake --version
+# Should show Qt 5.x version
+
+# Verify Qt5 path is set
+echo $QTDIR
+# Should show Qt5 installation path
 ```
+
+**Note**: You need to source the SDK in your current terminal session. If you open a NEW terminal later, you'll need to source it again in that new terminal.
 
 ### 5.2 Create Build Directory
 
@@ -180,15 +237,62 @@ cd build
 
 ### 5.3 Configure Build
 
+**⚠️ BEFORE RUNNING CMAKE**: Make sure you completed Step 5.1 (sourced SDK)!
+
+If you haven't sourced the SDK yet, do it now (use YOUR actual SDK path):
 ```bash
+# Replace with YOUR actual SDK path!
+# Example: source /opt/codex/ferrari/5.2.96-dirty/environment-setup-cortexa53-crypto-remarkable-linux
+# OR: source ~/remarkable-sdk/environment-setup-cortexa53-crypto-remarkable-linux
+source /path/to/your/sdk/environment-setup-cortexa53-crypto-remarkable-linux
+```
+
+Then run cmake:
+```bash
+# First, find Qt5 location using helper script
+cd ~/Remarkable_app
+chmod +x find-qt5.sh
+./find-qt5.sh /opt/codex/ferrari/5.2.96-dirty/environment-setup-cortexa53-crypto-remarkable-linux
+
+# OR find manually:
+source /opt/codex/ferrari/5.2.96-dirty/environment-setup-cortexa53-crypto-remarkable-linux
+QT5_PATH=$(find /opt/codex/ferrari/5.2.96-dirty -name "Qt5Config.cmake" 2>/dev/null | head -1)
+if [ ! -z "$QT5_PATH" ]; then
+    QT5_PREFIX=$(dirname "$QT5_PATH" | xargs dirname | xargs dirname)
+    echo "Found Qt5 at: $QT5_PREFIX"
+    cd build
+    cmake .. \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_PREFIX_PATH="$QT5_PREFIX"
+else
+    echo "ERROR: Qt5 not found! Check SDK installation."
+fi
+```
+
+**If you get "Qt5 not found" errors**, it means SDK wasn't sourced. Fix it:
+```bash
+# Check if SDK environment is active
+echo $CC
+# Should show: arm-remarkable-linux-gnueabi-gcc (if not, SDK not sourced!)
+
+# If $CC is empty, source SDK now (use YOUR actual SDK path):
+# Example: source /opt/codex/ferrari/5.2.96-dirty/environment-setup-cortexa53-crypto-remarkable-linux
+source /path/to/your/sdk/environment-setup-cortexa53-crypto-remarkable-linux
+
+# Verify it worked
+echo $CC
+qmake --version
+
+# Now try cmake again with CMAKE_PREFIX_PATH
 cmake .. \
     -DCMAKE_BUILD_TYPE=Release \
-    -DCMAKE_INSTALL_PREFIX=/usr \
-    -DQT_QMAKE_EXECUTABLE=$QMAKE
-```
+    -DCMAKE_PREFIX_PATH="$QTDIR"
 
 **Expected output:**
 ```
+-- The C compiler identification is GNU...
+-- The CXX compiler identification is GNU...
+-- Found Qt5: ...
 -- Configuring done
 -- Generating done
 -- Build files have been written to: /home/USER/Remarkable_app/build
@@ -358,13 +462,34 @@ killall -HUP xochitl
 
 ### Build Errors
 
-**Error: "Qt not found"**
+**Error: "Qt not found" or "Could not find Qt5"**
 ```bash
-# Make sure SDK is sourced
-source ~/remarkable-sdk/environment-setup-cortexa53-crypto-remarkable-linux
+# CRITICAL: Make sure SDK is sourced FIRST! (use YOUR actual SDK path)
+# Example: source /opt/codex/ferrari/5.2.96-dirty/environment-setup-cortexa53-crypto-remarkable-linux
+source /path/to/your/sdk/environment-setup-cortexa53-crypto-remarkable-linux
 
-# Verify Qt path
+# Verify Qt5 is available
+qmake --version
+# Should show Qt 5.x
+
+# Verify Qt5 path
 echo $QTDIR
+# Should show path like: /home/USER/remarkable-sdk/sysroots/cortexa53-crypto-remarkable-linux/usr
+
+# Verify cross-compiler
+echo $CC
+# Should show: arm-remarkable-linux-gnueabi-gcc
+
+# If still not found, check SDK installation
+ls ~/remarkable-sdk/sysroots/cortexa53-crypto-remarkable-linux/usr/lib/libQt5*
+# Should show Qt5 libraries
+
+# Clean build directory and re-run cmake AFTER sourcing SDK
+cd ~/Remarkable_app/build
+rm -rf *
+# Source SDK (use YOUR actual path!)
+source /path/to/your/sdk/environment-setup-cortexa53-crypto-remarkable-linux
+cmake .. -DCMAKE_BUILD_TYPE=Release
 ```
 
 **Error: "CMake version too old"**
@@ -431,16 +556,18 @@ ssh root@10.11.99.1 "cat /tmp/recadpro.log"
 
 ### Build Commands
 ```bash
-# Source SDK
-source ~/remarkable-sdk/environment-setup-cortexa53-crypto-remarkable-linux
+# ALWAYS source SDK first in every terminal session! (use YOUR actual SDK path)
+# Example: source /opt/codex/ferrari/5.2.96-dirty/environment-setup-cortexa53-crypto-remarkable-linux
+source /path/to/your/sdk/environment-setup-cortexa53-crypto-remarkable-linux
 
 # Clean build
 cd ~/Remarkable_app/build
 rm -rf *
-cmake ..
+cmake .. -DCMAKE_BUILD_TYPE=Release
 make -j$(nproc)
 
-# Rebuild after changes
+# Rebuild after changes (still need SDK sourced - use YOUR actual path)
+source /path/to/your/sdk/environment-setup-cortexa53-crypto-remarkable-linux
 make -j$(nproc)
 ```
 
