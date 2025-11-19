@@ -41,13 +41,6 @@ endif()
 
 find_package(Qt5 REQUIRED COMPONENTS Quick Core Gui Qml QuickControls2)
 
-# Ensure legacy Qt5 helper macros (qt5_add_resources, etc.) are available
-if(EXISTS "${Qt5Core_DIR}/Qt5CoreMacros.cmake")
-    include("${Qt5Core_DIR}/Qt5CoreMacros.cmake")
-else()
-    message(WARNING "Qt5CoreMacros.cmake not found; qt5_add_resources may be unavailable")
-endif()
-
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
@@ -152,26 +145,32 @@ file(APPEND ${CMAKE_BINARY_DIR}/qml.qrc
 </RCC>
 ")
 
-qt5_add_resources(QML_RESOURCES ${CMAKE_BINARY_DIR}/qml.qrc)
+file(WRITE ${CMAKE_BINARY_DIR}/icons.qrc
+"<RCC>
+    <qresource prefix=\"/resources/icons\">
+")
+foreach(ICON_FILE pen.svg pencil.svg brush.svg eraser.svg)
+    file(APPEND ${CMAKE_BINARY_DIR}/icons.qrc
+        "        <file>${CMAKE_SOURCE_DIR}/resources/icons/${ICON_FILE}</file>\n")
+endforeach()
+file(APPEND ${CMAKE_BINARY_DIR}/icons.qrc
+"    </qresource>
+</RCC>
+")
 
-# Icon resources
-qt5_add_resources(ICON_RESOURCES
-    PREFIX "/resources/icons"
-    FILES
-        resources/icons/pen.svg
-        resources/icons/pencil.svg
-        resources/icons/brush.svg
-        resources/icons/eraser.svg
+set(RESOURCE_QRCS
+    ${CMAKE_BINARY_DIR}/qml.qrc
+    ${CMAKE_BINARY_DIR}/icons.qrc
 )
 
-target_link_libraries(${PROJECT_NAME} PRIVATE 
+target_sources(${PROJECT_NAME} PRIVATE ${RESOURCE_QRCS})
+
+target_link_libraries(${PROJECT_NAME} PRIVATE
     Qt5::Quick 
     Qt5::Core 
     Qt5::Gui 
     Qt5::Qml
     Qt5::QuickControls2
-    ${QML_RESOURCES}
-    ${ICON_RESOURCES}
 )
 
 # Set QML import path
