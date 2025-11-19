@@ -110,8 +110,8 @@ make -j$(nproc)
 ./deploy-remarkable.sh
 
 # Or manually:
-scp build/drafting-pro root@10.11.99.1:/opt/drafting-pro/
-ssh root@10.11.99.1 "chmod +x /opt/drafting-pro/drafting-pro"
+scp build/recadpro root@10.11.99.1:/opt/recadpro/
+ssh root@10.11.99.1 "chmod +x /opt/recadpro/recadpro"
 ```
 
 ### Step 4: Run on Device
@@ -121,7 +121,7 @@ ssh root@10.11.99.1 "chmod +x /opt/drafting-pro/drafting-pro"
 ssh root@10.11.99.1
 
 # Run application
-/opt/drafting-pro/drafting-pro -platform epaper
+/opt/recadpro/recadpro -platform epaper
 ```
 
 ## 🧪 Testing Checklist

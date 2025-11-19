@@ -10,6 +10,7 @@ Rectangle {
     
     property alias tools: toolsRef
     property alias draftingTools: draftingToolsRef
+    property ObjectManager objectManager: null
     
     Tools { id: toolsRef }
     DraftingTools { id: draftingToolsRef }
@@ -20,10 +21,10 @@ Rectangle {
     
     ScrollView {
         anchors.fill: parent
-        anchors.margins: 16
+        anchors.margins: 20  // Increased margin for better spacing
         
         Column {
-            spacing: 24
+            spacing: 32  // Increased spacing between sections
             
             // Drawing tools section
             Column {
@@ -89,6 +90,19 @@ Rectangle {
                     font.pixelSize: 16
                 }
                 
+                // Arc mode selector (only show when arc tool is selected)
+                ComboBox {
+                    width: parent.width
+                    visible: toolsRef && toolsRef.currentTool === "arc"
+                    model: ["3-Point", "Center-Radius", "Start-End-Radius"]
+                    onCurrentIndexChanged: {
+                        if (window && window.shapeTools) {
+                            var modes = ["3point", "center-radius", "start-end-radius"];
+                            window.shapeTools.arcMode = modes[currentIndex];
+                        }
+                    }
+                }
+                
                 Grid {
                     columns: 4
                     spacing: 8
@@ -130,6 +144,20 @@ Rectangle {
                                 toolsRef.currentTool = "circle"
                                 if (window && window.shapeTools) {
                                     window.shapeTools.currentShape = "circle"
+                                }
+                            }
+                        }
+                    }
+                    
+                    ToolIcon {
+                        iconType: "arc"
+                        checked: toolsRef.currentTool === "arc"
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: {
+                                toolsRef.currentTool = "arc"
+                                if (window && window.shapeTools) {
+                                    window.shapeTools.currentShape = "arc"
                                 }
                             }
                         }
@@ -459,6 +487,32 @@ Rectangle {
                 }
             }
             
+            // Navigation tools section
+            Column {
+                width: parent.width
+                spacing: 8
+                
+                Text {
+                    text: "Navigation"
+                    font.bold: true
+                    font.pixelSize: 18  // Increased for readability
+                }
+                
+                Grid {
+                    columns: 2
+                    spacing: 12
+                    
+                    ToolIcon {
+                        iconType: "pan"
+                        checked: toolsRef.currentTool === "pan"
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: toolsRef.currentTool = "pan"
+                        }
+                    }
+                }
+            }
+            
             // Drafting tools section
             Column {
                 width: parent.width
@@ -467,7 +521,7 @@ Rectangle {
                 Text {
                     text: "Drafting Tools"
                     font.bold: true
-                    font.pixelSize: 16
+                    font.pixelSize: 18  // Increased for readability
                 }
                 
                 Column {
@@ -869,6 +923,112 @@ Rectangle {
                     }
                 }
             }
+            
+            // Object Snap section
+            Column {
+                width: parent.width
+                spacing: 8
+                
+                Text {
+                    text: "Object Snap"
+                    font.bold: true
+                    font.pixelSize: 16
+                }
+                
+                CheckBox {
+                    text: "Enable Snap"
+                    checked: window && window.snapTools ? window.snapTools.snapEnabled : false
+                    onCheckedChanged: {
+                        if (window && window.snapTools) {
+                            window.snapTools.snapEnabled = checked
+                        }
+                    }
+                }
+                
+                CheckBox {
+                    text: "Endpoint"
+                    checked: window && window.snapTools ? window.snapTools.snapToEndpoint : false
+                    enabled: window && window.snapTools && window.snapTools.snapEnabled
+                    onCheckedChanged: {
+                        if (window && window.snapTools) {
+                            window.snapTools.snapToEndpoint = checked
+                        }
+                    }
+                }
+                
+                CheckBox {
+                    text: "Midpoint"
+                    checked: window && window.snapTools ? window.snapTools.snapToMidpoint : false
+                    enabled: window && window.snapTools && window.snapTools.snapEnabled
+                    onCheckedChanged: {
+                        if (window && window.snapTools) {
+                            window.snapTools.snapToMidpoint = checked
+                        }
+                    }
+                }
+                
+                CheckBox {
+                    text: "Intersection"
+                    checked: window && window.snapTools ? window.snapTools.snapToIntersection : false
+                    enabled: window && window.snapTools && window.snapTools.snapEnabled
+                    onCheckedChanged: {
+                        if (window && window.snapTools) {
+                            window.snapTools.snapToIntersection = checked
+                        }
+                    }
+                }
+                
+                CheckBox {
+                    text: "Center"
+                    checked: window && window.snapTools ? window.snapTools.snapToCenter : false
+                    enabled: window && window.snapTools && window.snapTools.snapEnabled
+                    onCheckedChanged: {
+                        if (window && window.snapTools) {
+                            window.snapTools.snapToCenter = checked
+                        }
+                    }
+                }
+                
+                CheckBox {
+                    text: "Perpendicular"
+                    checked: window && window.snapTools ? window.snapTools.snapToPerpendicular : false
+                    enabled: window && window.snapTools && window.snapTools.snapEnabled
+                    onCheckedChanged: {
+                        if (window && window.snapTools) {
+                            window.snapTools.snapToPerpendicular = checked
+                        }
+                    }
+                }
+                
+                CheckBox {
+                    text: "Tangent"
+                    checked: window && window.snapTools ? window.snapTools.snapToTangent : false
+                    enabled: window && window.snapTools && window.snapTools.snapEnabled
+                    onCheckedChanged: {
+                        if (window && window.snapTools) {
+                            window.snapTools.snapToTangent = checked
+                        }
+                    }
+                }
+                
+                Text {
+                    text: "Snap Tolerance"
+                    font.pixelSize: 12
+                }
+                
+                Slider {
+                    width: parent.width
+                    from: 5
+                    to: 50
+                    value: window && window.snapTools ? window.snapTools.snapTolerance : 10
+                    enabled: window && window.snapTools && window.snapTools.snapEnabled
+                    onValueChanged: {
+                        if (window && window.snapTools) {
+                            window.snapTools.snapTolerance = value
+                        }
+                    }
+                }
+            }
         }
     }
     
@@ -907,6 +1067,24 @@ Rectangle {
                             fillColorDialog.close()
                         }
                     }
+                }
+            }
+            
+            // Object Management section
+            Column {
+                width: parent.width
+                spacing: 8
+                
+                Text {
+                    text: "Objects"
+                    font.bold: true
+                    font.pixelSize: 16
+                }
+                
+                ObjectPanel {
+                    width: parent.width
+                    height: 300
+                    objectManager: sidebar.objectManager
                 }
             }
         }

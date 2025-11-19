@@ -44,6 +44,18 @@ public slots:
     void redo();
     QImage getImage() const;
     void setImage(const QImage &image);
+    void addImage(const QImage &image, const QPointF &position = QPointF(0, 0));
+    
+    // Stroke access for copy/paste
+    struct StrokeData {
+        QList<QPointF> points;
+        QColor color;
+        qreal opacity;
+        qreal lineWidth;
+    };
+    Q_INVOKABLE QList<StrokeData> getStrokes(const QList<int> &indices) const;
+    Q_INVOKABLE void addStrokes(const QList<StrokeData> &strokes);
+    Q_INVOKABLE int strokeCount() const { return m_strokes.size(); }
 
 signals:
     void lineWidthChanged();
@@ -71,11 +83,14 @@ private:
         QList<StrokePoint> points;
         QColor color;
         qreal opacity;
+        QRectF bounds; // Cached bounds for dirty region tracking
     };
     
     void addPoint(const QPointF &point, qreal pressure = 1.0);
     void drawStroke(QPainter *painter, const Stroke &stroke);
     void optimizeForEpaper(QPainter *painter);
+    QRectF calculateStrokeBounds(const Stroke &stroke) const;
+    QPointF smoothPoint(const QPointF &newPoint); // Input smoothing
     
     qreal m_lineWidth;
     QColor m_color;
@@ -88,7 +103,14 @@ private:
     QList<QImage> m_undoStack;
     QList<QImage> m_redoStack;
     
+    // E-paper optimization: Dirty region tracking
+    QRectF m_dirtyRegion;
+    QPointF m_lastPoint; // For input smoothing
+    qint64 m_lastUpdateTime; // For refresh rate limiting
+    
     static const int MAX_UNDO_STEPS = 50;
+    static const qint64 MIN_REFRESH_INTERVAL_MS = 33; // ~30fps max for e-paper
+    static const qreal SMOOTHING_FACTOR = 0.3; // Input smoothing factor
 };
 
 #endif // DRAWINGENGINE_H

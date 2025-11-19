@@ -6,8 +6,8 @@
 set -e
 
 DEVICE_IP="${1:-10.11.99.1}"
-APP_NAME="drafting-pro"
-INSTALL_PATH="/opt/drafting-pro"
+APP_NAME="recadpro"
+INSTALL_PATH="/opt/recadpro"
 BUILD_DIR="build"
 
 echo "=========================================="

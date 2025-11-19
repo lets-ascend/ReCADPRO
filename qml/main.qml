@@ -1,6 +1,6 @@
 import QtQuick
 import QtQuick.Controls
-import RemarkableDraftingPro
+import ReCADPro
 
 /**
  * Main QML file for reMarkable Paper Pro
@@ -37,6 +37,12 @@ ApplicationWindow {
     property alias brushTools: brushToolsController
     property alias advancedMeasurement: advancedMeasurementController
     property alias drawing3DEnhanced: drawing3DEnhancedController
+    property alias clipboard: clipboardController
+    property alias importer: importerController
+    property alias objectManager: objectManagerController
+    property alias layerCompositor: layerCompositorController
+    property alias layerManager: layerManagerController
+    property alias snapTools: snapToolsController
     
     // Tools controller
     Tools {
@@ -124,16 +130,51 @@ ApplicationWindow {
         id: drawing3DEnhancedController
     }
     
+    // Clipboard controller
+    Clipboard {
+        id: clipboardController
+    }
+    
+    // Importer controller
+    Importer {
+        id: importerController
+    }
+    
+    // Object manager controller
+    ObjectManager {
+        id: objectManagerController
+    }
+    
+    // Layer compositor controller
+    LayerCompositor {
+        id: layerCompositorController
+    }
+    
+    // Layer manager controller
+    LayerManager {
+        id: layerManagerController
+        layers: layersController
+    }
+    
+    // Snap tools controller
+    SnapTools {
+        id: snapToolsController
+        Component.onCompleted: {
+            snapToolsController.setDrawingEngine(drawingCanvas);
+            snapToolsController.setShapeTools(shapeToolsController);
+        }
+    }
+    
     // Main layout
     Column {
         anchors.fill: parent
         spacing: 0
         
-        // Top toolbar
+        // Top toolbar (optimized height for Paper Pro)
         Toolbar {
             id: toolbar
             width: parent.width
-            height: 80
+            height: 96  // Increased for better touch targets (12px * 8 = 96px)
             tools: toolsController
             draftingTools: draftingController
             layers: layersController
@@ -148,10 +189,10 @@ ApplicationWindow {
             height: parent.height - toolbar.height
             spacing: 0
             
-            // Left sidebar
+            // Left sidebar (optimized width for Paper Pro)
             Sidebar {
                 id: sidebar
-                width: 280
+                width: 320  // Increased from 280 for better touch targets
                 height: parent.height
                 tools: toolsController
                 draftingTools: draftingController
@@ -195,12 +236,36 @@ ApplicationWindow {
                     brushTools: brushToolsController
                     advancedMeasurement: advancedMeasurementController
                     drawing3DEnhanced: drawing3DEnhancedController
+                    snapTools: snapToolsController
+                }
+                
+                // Connect SelectionManager to DrawingEngine and Clipboard
+                Component.onCompleted: {
+                    selectionController.setDrawingEngine(drawingCanvas);
+                    selectionController.setClipboard(clipboardController);
+                }
+                
+                // Connect DrawingEngine stroke completion to LayerManager
+                Connections {
+                    target: drawingCanvas
+                    function onStrokeCompleted(strokeIndex) {
+                        // Update layer manager when stroke is completed
+                        if (layerManagerController && drawingCanvas) {
+                            // Register current canvas image to active layer
+                            var activeLayerIndex = layersController.activeLayerIndex;
+                            var canvasImage = drawingCanvas.getImage();
+                            layerManagerController.registerLayerCanvas(activeLayerIndex, canvasImage);
+                            
+                            // Trigger layer update (layer manager will composite layers)
+                            layerManagerController.updatePreview();
+                        }
+                    }
                 }
             }
             
             // Right sidebar (layers and templates)
             LayersPanel {
-                width: 280
+                width: 320  // Increased from 280 for better touch targets
                 height: parent.height
                 layers: layersController
             }
@@ -209,17 +274,20 @@ ApplicationWindow {
     
     // Handle keyboard shortcuts
     Keys.onPressed: (event) => {
-        if ((event.modifiers & Qt.ControlModifier) || (event.modifiers & Qt.MetaModifier)) {
+            if ((event.modifiers & Qt.ControlModifier) || (event.modifiers & Qt.MetaModifier)) {
             if (event.key === Qt.Key_Z) {
                 if (event.modifiers & Qt.ShiftModifier) {
                     drawingEngine.redo();
+                    toastMessage.show("Redo", "success", 1000);
                 } else {
                     drawingEngine.undo();
+                    toastMessage.show("Undo", "success", 1000);
                 }
                 event.accepted = true;
             } else if (event.key === Qt.Key_S) {
                 // Save functionality
                 saveProject();
+                toastMessage.show("Project saved", "success", 2000);
                 event.accepted = true;
             } else if (event.key === Qt.Key_N) {
                 drawingEngine.clear();
@@ -228,11 +296,37 @@ ApplicationWindow {
                 // Copy selected
                 if (selectionController.hasSelection) {
                     selectionController.copySelected();
+                    toastMessage.show("Copied", "success", 1000);
+                } else {
+                    toastMessage.show("Nothing selected", "warning", 1500);
                 }
                 event.accepted = true;
             } else if (event.key === Qt.Key_V) {
                 // Paste
-                // Would need clipboard integration
+                if (clipboardController.hasContent) {
+                    var pastePos = Qt.point(width/2, height/2);
+                    var pastedStrokes = clipboardController.paste(pastePos);
+                    
+                    // Convert ClipboardStroke to DrawingEngine::StrokeData
+                    var strokeData = [];
+                    for (var i = 0; i < pastedStrokes.length; i++) {
+                        var clipStroke = pastedStrokes[i];
+                        strokeData.push({
+                            points: clipStroke.points,
+                            color: clipStroke.color,
+                            opacity: clipStroke.opacity,
+                            lineWidth: clipStroke.lineWidth
+                        });
+                    }
+                    
+                    // Add strokes to drawing engine
+                    if (strokeData.length > 0) {
+                        drawingCanvas.addStrokes(strokeData);
+                        toastMessage.show("Pasted", "success", 1000);
+                    }
+                } else {
+                    toastMessage.show("Clipboard empty", "warning", 1500);
+                }
                 event.accepted = true;
             } else if (event.key === Qt.Key_X) {
                 // Cut selected
@@ -258,7 +352,7 @@ ApplicationWindow {
     function saveProject() {
         var projectData = projectFileController.createProjectData();
         // Add actual project data here
-        var fileUrl = Qt.resolvedUrl("file:///home/root/drafting-project.json");
+        var fileUrl = Qt.resolvedUrl("file:///home/root/recadpro-project.json");
         projectFileController.saveProject(fileUrl, projectData);
     }
     

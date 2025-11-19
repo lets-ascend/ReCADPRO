@@ -1,5 +1,6 @@
 #include "layermanager.h"
 #include <QDebug>
+#include <QtGlobal>
 
 LayerManager::LayerManager(QObject *parent)
     : QObject(parent)
@@ -40,8 +41,30 @@ void LayerManager::setLayers(Layers *layers)
 
 void LayerManager::registerLayerCanvas(int layerIndex, QImage layerImage)
 {
-    if (layerIndex < 0 || layerIndex >= m_layerImages.size()) {
-        // Resize if needed
+    // Validate layer index
+    if (layerIndex < 0) {
+        qWarning() << "LayerManager::registerLayerCanvas: Invalid negative index" << layerIndex;
+        return;
+    }
+    
+    // Limit maximum layers to prevent memory issues
+    static const int MAX_LAYERS = 100;
+    if (layerIndex >= MAX_LAYERS) {
+        qWarning() << "LayerManager::registerLayerCanvas: Layer index exceeds maximum" << layerIndex;
+        return;
+    }
+    
+    // Limit image size to prevent memory issues
+    static const int MAX_IMAGE_DIMENSION = 8000;
+    if (layerImage.width() > MAX_IMAGE_DIMENSION || layerImage.height() > MAX_IMAGE_DIMENSION) {
+        qWarning() << "LayerManager::registerLayerCanvas: Image too large, scaling down";
+        QSize newSize = layerImage.size();
+        newSize.scale(MAX_IMAGE_DIMENSION, MAX_IMAGE_DIMENSION, Qt::KeepAspectRatio);
+        layerImage = layerImage.scaled(newSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+    }
+    
+    // Resize if needed
+    if (layerIndex >= m_layerImages.size()) {
         while (m_layerImages.size() <= layerIndex) {
             m_layerImages.append(QImage());
         }
@@ -53,6 +76,12 @@ void LayerManager::registerLayerCanvas(int layerIndex, QImage layerImage)
 void LayerManager::updatePreview(const QSize &size)
 {
     rebuildPreview(size);
+}
+
+void LayerManager::updatePreview()
+{
+    // Use default canvas size (1872x1404 for Paper Pro)
+    rebuildPreview(QSize(1872, 1404));
 }
 
 QImage LayerManager::getCompositedImage(const QSize &size)

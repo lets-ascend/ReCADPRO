@@ -1,6 +1,6 @@
 import QtQuick
 import QtQuick.Controls
-import RemarkableDraftingPro
+import ReCADPro
 
 /**
  * RulerOverlay - Visual ruler tool overlay

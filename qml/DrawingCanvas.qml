@@ -1,6 +1,6 @@
 import QtQuick
 import QtQuick.Controls
-import RemarkableDraftingPro
+import ReCADPro
 
 /**
  * DrawingCanvas - Main drawing surface optimized for reMarkable Paper Pro
@@ -21,6 +21,7 @@ DrawingEngine {
     property BrushTools brushTools: null
     property AdvancedMeasurement advancedMeasurement: null
     property Drawing3DEnhanced drawing3DEnhanced: null
+    property SnapTools snapTools: null
     
     // Canvas properties
     clip: true
@@ -90,6 +91,13 @@ DrawingEngine {
         z: 7
     }
     
+    // Snap indicator overlay
+    SnapIndicatorOverlay {
+        id: snapIndicatorOverlay
+        anchors.fill: parent
+        snapTools: canvas.snapTools
+    }
+    
     // Text rendering overlay
     Repeater {
         model: textTool ? textTool.getAllTexts() : []
@@ -143,6 +151,32 @@ DrawingEngine {
                         ctx.fill();
                     }
                     break;
+                case "arc":
+                    // Draw arc preview based on current step
+                    if (shape.centerPoint && shape.radius > 0) {
+                        // Arc is calculated, draw it
+                        var startAngleRad = shape.startAngle * Math.PI / 180;
+                        var endAngleRad = shape.endAngle * Math.PI / 180;
+                        var center = shape.centerPoint;
+                        var radius = shape.radius;
+                        
+                        ctx.beginPath();
+                        ctx.arc(center.x, center.y, radius, startAngleRad, endAngleRad);
+                        ctx.stroke();
+                    } else if (shape.middlePoint && shape.middlePoint.x !== start.x && shape.middlePoint.y !== start.y) {
+                        // 3-point arc: show preview through 3 points
+                        ctx.beginPath();
+                        ctx.moveTo(start.x, start.y);
+                        ctx.quadraticCurveTo(shape.middlePoint.x, shape.middlePoint.y, end.x, end.y);
+                        ctx.stroke();
+                    } else {
+                        // Just show line from start to end
+                        ctx.beginPath();
+                        ctx.moveTo(start.x, start.y);
+                        ctx.lineTo(end.x, end.y);
+                        ctx.stroke();
+                    }
+                    break;
                 case "line":
                     ctx.beginPath();
                     ctx.moveTo(start.x, start.y);
@@ -160,11 +194,53 @@ DrawingEngine {
         }
     }
     
+    // Zoom and pan handler
+    ZoomPanHandler {
+        id: zoomPanHandler
+        anchors.fill: parent
+        enabled: tools && tools.currentTool !== "select" && tools.currentTool !== "pan"  // Disable during selection, enable pan tool
+        
+        undoCallback: function() {
+            if (window && window.drawingEngine) {
+                window.drawingEngine.undo()
+            }
+        }
+        
+        redoCallback: function() {
+            if (window && window.drawingEngine) {
+                window.drawingEngine.redo()
+            }
+        }
+        
+        onZoomChanged: (level) => {
+            // Apply zoom transform to canvas
+            canvas.scale = level
+        }
+        
+        onPanChanged: (offset) => {
+            // Apply pan transform to canvas
+            canvas.x = offset.x
+            canvas.y = offset.y
+        }
+    }
+    
+    // Zoom controls overlay
+    ZoomControls {
+        id: zoomControlsOverlay
+        anchors.bottom: parent.bottom
+        anchors.right: parent.right
+        anchors.margins: 20
+        zoomHandler: zoomPanHandler
+        selectionManager: canvas.selectionManager
+        z: 100
+    }
+    
     // Mouse/touch handling for shapes
     MouseArea {
         anchors.fill: parent
         enabled: tools && tools.currentTool && (tools.currentTool === "rectangle" || 
                                        tools.currentTool === "circle" || 
+                                       tools.currentTool === "arc" ||
                                        tools.currentTool === "line" || 
                                        tools.currentTool === "arrow" ||
                                        tools.currentTool === "text" ||
@@ -194,6 +270,14 @@ DrawingEngine {
             if (draftingTools && draftingTools.snapToGrid) {
                 var snapped = draftingTools.snapPoint(point.x, point.y);
                 point = Qt.point(snapped.x, snapped.y);
+            }
+            
+            // Apply object snap if enabled
+            if (snapTools && snapTools.snapEnabled) {
+                var snapInfo = snapTools.getSnapInfo(point);
+                if (snapInfo.type !== "") {
+                    point = snapInfo.point;
+                }
             }
             
             if (tools && tools.currentTool === "text") {
@@ -290,6 +374,20 @@ DrawingEngine {
             if (draftingTools && draftingTools.snapToGrid) {
                 var snapped = draftingTools.snapPoint(point.x, point.y);
                 point = Qt.point(snapped.x, snapped.y);
+            }
+            
+            // Apply object snap if enabled
+            if (snapTools && snapTools.snapEnabled) {
+                var snapInfo = snapTools.getSnapInfo(point);
+                if (snapInfo.type !== "") {
+                    snapIndicatorOverlay.snapPoint = snapInfo.point;
+                    snapIndicatorOverlay.snapType = snapInfo.type;
+                    point = snapInfo.point;
+                } else {
+                    snapIndicatorOverlay.snapType = "";
+                }
+            } else {
+                snapIndicatorOverlay.snapType = "";
             }
             
             if (tools && tools.currentTool === "select" && selectionManager) {

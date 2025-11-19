@@ -74,7 +74,7 @@ make -j$(nproc)
 ./deploy-remarkable.sh
 
 # Or manually:
-scp build/drafting-pro root@10.11.99.1:/opt/drafting-pro/
+scp build/recadpro root@10.11.99.1:/opt/recadpro/
 ```
 
 ### Run on Device
@@ -87,8 +87,8 @@ ssh root@10.11.99.1
 systemctl stop xochitl
 
 # Run application
-cd /opt/drafting-pro
-QT_QUICK_BACKEND=epaper ./drafting-pro -platform epaper
+cd /opt/recadpro
+QT_QUICK_BACKEND=epaper ./recadpro -platform epaper
 
 # After testing, restart xochitl
 systemctl start xochitl
@@ -142,6 +142,6 @@ scp file.txt root@10.11.99.1:/home/root/
 
 **App won't run?**
 - Check logs: `journalctl -f`
-- Verify permissions: `chmod +x /opt/drafting-pro/drafting-pro`
+- Verify permissions: `chmod +x /opt/recadpro/recadpro`
 - Ensure xochitl is stopped: `systemctl stop xochitl`
-- Use e-paper backend: `QT_QUICK_BACKEND=epaper ./drafting-pro -platform epaper`
+- Use e-paper backend: `QT_QUICK_BACKEND=epaper ./recadpro -platform epaper`

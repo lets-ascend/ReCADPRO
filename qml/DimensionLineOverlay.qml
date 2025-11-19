@@ -1,6 +1,6 @@
 import QtQuick
 import QtQuick.Controls
-import RemarkableDraftingPro
+import ReCADPro
 
 /**
  * DimensionLineOverlay - Visual dimension lines with arrows

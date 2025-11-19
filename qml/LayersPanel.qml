@@ -1,6 +1,6 @@
 import QtQuick
 import QtQuick.Controls
-import RemarkableDraftingPro
+import ReCADPro
 
 /**
  * LayersPanel - Right sidebar with layers and templates
@@ -22,7 +22,7 @@ Rectangle {
         anchors.margins: 16
         
         Column {
-            spacing: 24
+            spacing: 32  // Increased spacing between sections
             
             // Layers section
             Column {
@@ -36,50 +36,114 @@ Rectangle {
                     Text {
                         text: "Layers"
                         font.bold: true
-                        font.pixelSize: 16
+                        font.pixelSize: 18  // Increased for readability
                     }
                     
-                    Button {
+                    NativeTouchButton {
                         text: "+"
-                        width: 30
+                        width: 48  // Minimum touch target
+                        height: 48
                         onClicked: layersRef.addLayer()
                     }
                 }
                 
                 ListView {
                     width: parent.width
-                    height: 200
+                    height: Math.min(400, layersRef.layerNames.length * 100)
                     model: layersRef.layerNames
                     
                     delegate: Rectangle {
                         width: parent.width
-                        height: 40
+                        height: 100
                         color: layersRef.activeLayerIndex === index ? "#e3f2fd" : "#ffffff"
                         border.color: "#e0e0e0"
                         border.width: 1
                         
-                        Row {
+                        Column {
                             anchors.fill: parent
-                            anchors.margins: 8
-                            spacing: 8
+                            anchors.margins: 4
+                            spacing: 4
                             
-                            Text {
-                                text: modelData
-                                anchors.verticalCenter: parent.verticalCenter
+                            Row {
+                                width: parent.width
+                                spacing: 8
+                                
+                                Text {
+                                    text: modelData
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    width: 80
+                                    elide: Text.ElideRight
+                                }
+                                
+                                Item { width: 1; height: 1 } // Spacer
+                                
+                                NativeTouchButton {
+                                    text: layersRef.isLayerVisible(index) ? "👁" : "🚫"
+                                    width: 48  // Minimum touch target
+                                    height: 48
+                                    onClicked: layersRef.setLayerVisible(index, !layersRef.isLayerVisible(index))
+                                }
+                                
+                                NativeTouchButton {
+                                    text: "×"
+                                    width: 48  // Minimum touch target
+                                    height: 48
+                                    onClicked: layersRef.removeLayer(index)
+                                }
                             }
                             
-                            Item { width: 1; height: 1 } // Spacer
-                            
-                            Button {
-                                text: layersRef.isLayerVisible(index) ? "👁" : "🚫"
-                                width: 30
-                                onClicked: layersRef.setLayerVisible(index, !layersRef.isLayerVisible(index))
+                            // Opacity slider
+                            Row {
+                                width: parent.width
+                                spacing: 4
+                                
+                                Text {
+                                    text: "Opacity:"
+                                    font.pixelSize: 10
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    width: 50
+                                }
+                                
+                                Slider {
+                                    width: 100
+                                    height: 20
+                                    from: 0
+                                    to: 100
+                                    value: layersRef.getLayerOpacity(index) * 100
+                                    onValueChanged: layersRef.setLayerOpacity(index, value / 100.0)
+                                }
+                                
+                                Text {
+                                    text: Math.round(layersRef.getLayerOpacity(index) * 100) + "%"
+                                    font.pixelSize: 10
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    width: 30
+                                }
                             }
                             
-                            Button {
-                                text: "×"
-                                width: 30
-                                onClicked: layersRef.removeLayer(index)
+                            // Blend mode dropdown
+                            Row {
+                                width: parent.width
+                                spacing: 4
+                                
+                                Text {
+                                    text: "Blend:"
+                                    font.pixelSize: 10
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    width: 50
+                                }
+                                
+                                ComboBox {
+                                    width: 120
+                                    height: 24
+                                    model: ["normal", "multiply", "screen", "overlay", "darken", "lighten"]
+                                    currentIndex: {
+                                        var mode = layersRef.getLayerBlendMode(index);
+                                        var modes = ["normal", "multiply", "screen", "overlay", "darken", "lighten"];
+                                        return modes.indexOf(mode);
+                                    }
+                                    onCurrentTextChanged: layersRef.setLayerBlendMode(index, currentText)
+                                }
                             }
                         }
                         
@@ -227,8 +291,9 @@ Rectangle {
                         }
                     }
                     
-                    Button {
+                    NativeTouchButton {
                         width: parent.width
+                        height: 48
                         text: "SVG"
                         onClicked: {
                             if (window && window.exporter && window.drawingEngine) {
@@ -239,8 +304,9 @@ Rectangle {
                         }
                     }
                     
-                    Button {
+                    NativeTouchButton {
                         width: parent.width
+                        height: 48
                         text: "PDF"
                         onClicked: {
                             if (window && window.exporter && window.drawingEngine) {
@@ -251,8 +317,9 @@ Rectangle {
                         }
                     }
                     
-                    Button {
+                    NativeTouchButton {
                         width: parent.width
+                        height: 48
                         text: "Export All..."
                         onClicked: {
                             if (window && window.exporter) {

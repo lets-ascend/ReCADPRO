@@ -85,7 +85,7 @@ The reMarkable Paper Pro uses Qt Quick for its UI framework. **Only pure Qt Quic
 
 **Project Structure**:
 ```
-remarkable-drafting-pro/
+remarkable-recadpro/
 ├── CMakeLists.txt
 ├── src/
 │   ├── main.cpp
@@ -115,7 +115,7 @@ make -j$(nproc)
 
 ```bash
 # Copy binary to device
-scp build/drafting-pro root@10.11.99.1:/opt/drafting-pro/
+scp build/recadpro root@10.11.99.1:/opt/recadpro/
 
 # Or use deployment script
 ./deploy-remarkable.sh
@@ -131,8 +131,8 @@ ssh root@10.11.99.1
 systemctl stop xochitl
 
 # Run application with e-paper backend
-cd /opt/drafting-pro
-QT_QUICK_BACKEND=epaper ./drafting-pro -platform epaper
+cd /opt/recadpro
+QT_QUICK_BACKEND=epaper ./recadpro -platform epaper
 
 # After testing, restart xochitl
 systemctl start xochitl

@@ -19,12 +19,35 @@ QImage Importer::importImage(const QUrl &fileUrl)
         return QImage();
     }
     
-    emit importStarted(QFileInfo(localPath).fileName());
+    // Check file exists
+    QFileInfo fileInfo(localPath);
+    if (!fileInfo.exists()) {
+        emit importError("File does not exist: " + localPath);
+        return QImage();
+    }
+    
+    // Check file size (limit to 50MB)
+    static const qint64 MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+    if (fileInfo.size() > MAX_FILE_SIZE) {
+        emit importError("File too large (max 50MB): " + QString::number(fileInfo.size() / 1024 / 1024) + "MB");
+        return QImage();
+    }
+    
+    emit importStarted(fileInfo.fileName());
     
     QImage image(localPath);
     if (image.isNull()) {
         emit importError("Failed to load image: " + localPath);
         return QImage();
+    }
+    
+    // Limit image dimensions (scale down if too large)
+    static const int MAX_DIMENSION = 4000;
+    if (image.width() > MAX_DIMENSION || image.height() > MAX_DIMENSION) {
+        QSize newSize = image.size();
+        newSize.scale(MAX_DIMENSION, MAX_DIMENSION, Qt::KeepAspectRatio);
+        image = image.scaled(newSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+        emit importProgress(50); // Indicate scaling occurred
     }
     
     // Note: reMarkable Paper Pro supports color (Canvas Color display)

@@ -1,11 +1,16 @@
 #include "selectionmanager.h"
 #include "drawingobject.h"
+#include "drawingengine.h"
+#include "clipboard.h"
 #include <QRectF>
 #include <QDebug>
+#include <QtGlobal>
 
 SelectionManager::SelectionManager(QObject *parent)
     : QObject(parent)
     , m_isSelecting(false)
+    , m_drawingEngine(nullptr)
+    , m_clipboard(nullptr)
 {
 }
 
@@ -20,6 +25,15 @@ QList<QObject*> SelectionManager::selectedObjects() const
 
 void SelectionManager::selectStroke(int strokeIndex)
 {
+    // Validate stroke index (must be non-negative)
+    if (strokeIndex < 0) {
+        qWarning() << "SelectionManager::selectStroke: Invalid negative index" << strokeIndex;
+        return;
+    }
+    
+    // Note: We can't validate upper bound without DrawingEngine reference
+    // This is checked in copySelected() when DrawingEngine is available
+    
     if (!m_selectedStrokeIndices.contains(strokeIndex)) {
         m_selectedStrokeIndices.append(strokeIndex);
         updateBounds();
@@ -169,13 +183,70 @@ void SelectionManager::moveSelected(const QPointF &offset)
 
 void SelectionManager::copySelected()
 {
-    // This would trigger clipboard copy
+    if (!m_drawingEngine || !m_clipboard || m_selectedStrokeIndices.isEmpty())
+        return;
+    
+    // Get stroke data from DrawingEngine
+    QList<DrawingEngine::StrokeData> strokeData = m_drawingEngine->getStrokes(m_selectedStrokeIndices);
+    
+    // Convert to ClipboardStroke format
+    QList<Clipboard::ClipboardStroke> clipboardStrokes;
+    for (const DrawingEngine::StrokeData &data : strokeData) {
+        Clipboard::ClipboardStroke clipStroke;
+        clipStroke.points = data.points;
+        clipStroke.color = data.color;
+        clipStroke.lineWidth = data.lineWidth;
+        clipStroke.opacity = data.opacity;
+        clipboardStrokes.append(clipStroke);
+    }
+    
+    // Copy to clipboard
+    m_clipboard->copy(clipboardStrokes, m_selectionBounds);
     emit selectionChanged();
+}
+
+void SelectionManager::setDrawingEngine(QObject *engine)
+{
+    m_drawingEngine = qobject_cast<DrawingEngine*>(engine);
+}
+
+void SelectionManager::setClipboard(QObject *clipboard)
+{
+    m_clipboard = qobject_cast<Clipboard*>(clipboard);
 }
 
 void SelectionManager::updateBounds()
 {
     QRectF bounds;
+    
+    // Calculate bounds from selected strokes
+    if (m_drawingEngine && !m_selectedStrokeIndices.isEmpty()) {
+        QList<DrawingEngine::StrokeData> strokeData = m_drawingEngine->getStrokes(m_selectedStrokeIndices);
+        
+        for (const DrawingEngine::StrokeData &stroke : strokeData) {
+            if (stroke.points.isEmpty())
+                continue;
+            
+            qreal minX = stroke.points[0].x();
+            qreal minY = stroke.points[0].y();
+            qreal maxX = minX;
+            qreal maxY = minY;
+            
+            for (const QPointF &point : stroke.points) {
+                minX = qMin(minX, point.x());
+                minY = qMin(minY, point.y());
+                maxX = qMax(maxX, point.x());
+                maxY = qMax(maxY, point.y());
+            }
+            
+            QRectF strokeBounds(minX, minY, maxX - minX, maxY - minY);
+            if (bounds.isNull()) {
+                bounds = strokeBounds;
+            } else {
+                bounds = bounds.united(strokeBounds);
+            }
+        }
+    }
     
     // Calculate bounds from selected objects
     for (DrawingObject *obj : m_selectedObjects) {
@@ -188,6 +259,11 @@ void SelectionManager::updateBounds()
     }
     
     m_selectionBounds = bounds;
+}
+
+QRectF SelectionManager::getSelectionBounds() const
+{
+    return m_selectionBounds;
 }
 
 void SelectionManager::clearSelection()

@@ -7,7 +7,7 @@ This is a **separate application** that runs on your reMarkable Paper Pro, simil
 ### Characteristics:
 
 1. **Runs as Separate Process**
-   - Installed in `/opt/drafting-pro/` (user space)
+   - Installed in `/opt/recadpro/` (user space)
    - Runs independently from the main OS interface
    - Doesn't modify system files
 
@@ -45,7 +45,7 @@ reMarkable OS → xochitl (main interface) → Your notebooks/documents
 
 ### When Running Our App:
 ```
-reMarkable OS → drafting-pro (our app) → Drawing interface
+reMarkable OS → recadpro (our app) → Drawing interface
                 (xochitl is stopped)
 ```
 
@@ -57,8 +57,8 @@ reMarkable OS → xochitl (restarted) → Back to normal
 ## Installation Location
 
 ```
-/opt/drafting-pro/          ← Our app lives here
-├── drafting-pro            ← Executable
+/opt/recadpro/          ← Our app lives here
+├── recadpro            ← Executable
 └── resources/              ← App resources
 
 /usr/bin/                   ← System binaries (unchanged)
@@ -89,8 +89,8 @@ This temporarily stops the main interface so our app can use the screen.
 
 ### Step 2: Run Our App
 ```bash
-cd /opt/drafting-pro
-QT_QUICK_BACKEND=epaper ./drafting-pro -platform epaper
+cd /opt/recadpro
+QT_QUICK_BACKEND=epaper ./recadpro -platform epaper
 ```
 Our application takes over the display.
 

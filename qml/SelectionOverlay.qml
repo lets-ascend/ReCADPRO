@@ -1,5 +1,5 @@
 import QtQuick 2.15
-import RemarkableDraftingPro 1.0
+import ReCADPro 1.0
 
 /**
  * SelectionOverlay - Visual selection rectangle and handles

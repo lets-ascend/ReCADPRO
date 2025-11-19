@@ -52,6 +52,11 @@ public:
     Q_INVOKABLE void deleteSelected();
     Q_INVOKABLE void moveSelected(const QPointF &offset);
     Q_INVOKABLE void copySelected();
+    Q_INVOKABLE QRectF getSelectionBounds() const;
+    
+    // Set references for operations
+    Q_INVOKABLE void setDrawingEngine(QObject *engine);
+    Q_INVOKABLE void setClipboard(QObject *clipboard);
 
 signals:
     void selectionChanged();
@@ -65,6 +70,9 @@ private:
     QRectF m_tempSelectionRect;
     bool m_isSelecting;
     QPointF m_selectionStart;
+    
+    DrawingEngine *m_drawingEngine;
+    Clipboard *m_clipboard;
     
     void updateBounds();
     void clearSelection();

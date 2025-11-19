@@ -31,6 +31,7 @@ public:
     
     // Update preview with current layer settings
     Q_INVOKABLE void updatePreview(const QSize &size);
+    Q_INVOKABLE void updatePreview(); // Uses default size
     
     // Get composited result
     Q_INVOKABLE QImage getCompositedImage(const QSize &size);

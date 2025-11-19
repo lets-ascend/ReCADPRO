@@ -10,7 +10,7 @@ This application is **completely safe** and will **NOT brick your device**. Here
 
 ### 1. **No System Modifications**
 - ✅ **No system file writes** - Application only writes to:
-  - `/opt/drafting-pro/` (safe user space)
+  - `/opt/recadpro/` (safe user space)
   - User-specified export/save locations (via file dialogs)
 - ✅ **No system directory access** - Never touches:
   - `/usr/bin/` (system binaries)
@@ -32,7 +32,7 @@ This application is **completely safe** and will **NOT brick your device**. Here
 - ✅ **No recursive deletes** - No `rm -rf` or dangerous deletions
 
 ### 4. **Isolated Installation**
-- ✅ **Separate directory** - Installs to `/opt/drafting-pro/` (isolated)
+- ✅ **Separate directory** - Installs to `/opt/recadpro/` (isolated)
 - ✅ **No OS changes** - Doesn't modify system behavior
 - ✅ **Easy removal** - Can be deleted by removing folder
 - ✅ **Non-persistent** - Only runs when explicitly started
@@ -65,8 +65,8 @@ if (!dir.exists()) {
 ### Installation Review
 ```bash
 # ✅ SAFE - Only creates app directory
-mkdir -p /opt/drafting-pro/  # Safe user space
-scp drafting-pro root@device:/opt/drafting-pro/  # Standard copy
+mkdir -p /opt/recadpro/  # Safe user space
+scp recadpro root@device:/opt/recadpro/  # Standard copy
 ```
 
 ### No Dangerous Patterns Found
@@ -86,7 +86,7 @@ scp drafting-pro root@device:/opt/drafting-pro/  # Standard copy
 ssh root@10.11.99.1
 
 # Remove application
-rm -rf /opt/drafting-pro/
+rm -rf /opt/recadpro/
 
 # Restart main interface (if stopped)
 systemctl start xochitl
@@ -97,7 +97,7 @@ systemctl start xochitl
 ## ⚠️ Important Notes
 
 ### What This App Does
-1. **Installs** to `/opt/drafting-pro/` (safe location)
+1. **Installs** to `/opt/recadpro/` (safe location)
 2. **Runs** when you start it manually
 3. **Stops** when you exit (Ctrl+C)
 4. **Writes** files only to user-specified locations

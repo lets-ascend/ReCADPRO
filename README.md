@@ -1,4 +1,4 @@
-# reMarkable Drafting Pro
+# ReCADPro
 
 **Native Qt Quick/QML + C++ standalone application for reMarkable Paper Pro**
 
@@ -63,7 +63,7 @@ make -j$(nproc)
 ./deploy-remarkable.sh
 
 # Or manually:
-scp build/drafting-pro root@10.11.99.1:/opt/drafting-pro/
+scp build/recadpro root@10.11.99.1:/opt/recadpro/
 ```
 
 ### Run on Device
@@ -76,8 +76,8 @@ ssh root@10.11.99.1
 systemctl stop xochitl
 
 # Run application
-cd /opt/drafting-pro
-QT_QUICK_BACKEND=epaper ./drafting-pro -platform epaper
+cd /opt/recadpro
+QT_QUICK_BACKEND=epaper ./recadpro -platform epaper
 
 # After testing, restart xochitl
 systemctl start xochitl
@@ -107,13 +107,30 @@ Remarkable_app/
 └── REMARKABLE_NATIVE_DEVELOPMENT.md  # Full development guide
 ```
 
-## Documentation
+## 📚 Documentation
 
-- **[IMPLEMENTATION_STATUS.md](./IMPLEMENTATION_STATUS.md)** ⭐ **START HERE** - Complete implementation status (what's done vs. future ideas)
+### 🚀 Getting Started
+- **[IMPLEMENTATION_GUIDE.md](./IMPLEMENTATION_GUIDE.md)** ⭐ **START HERE** - Complete step-by-step guide for Ubuntu VM setup and building
+- **[TESTING_GUIDE.md](./TESTING_GUIDE.md)** - Comprehensive testing checklist for final testing
+- **[QUICK_START.md](./QUICK_START.md)** - Quick reference guide
+
+### 📊 Project Status
+- **[IMPLEMENTATION_STATUS.md](./IMPLEMENTATION_STATUS.md)** - Complete implementation status (what's done vs. future ideas)
+- **[HIGH_PRIORITY_STATUS.md](./HIGH_PRIORITY_STATUS.md)** - High priority features completion status
+
+### 🔧 Development
 - **[REMARKABLE_NATIVE_DEVELOPMENT.md](./REMARKABLE_NATIVE_DEVELOPMENT.md)** - Complete development guide
-- **[QUICK_START.md](./QUICK_START.md)** - Quick start guide
+- **[BUILD_ENVIRONMENT.md](./BUILD_ENVIRONMENT.md)** - Build environment requirements
+- **[VM_BUILD_STEPS.md](./VM_BUILD_STEPS.md)** - VM-specific build instructions
+- **[GIT_SETUP.md](./GIT_SETUP.md)** - Git repository setup guide
+
+### 📖 Reference
+- **[CAD_COMPARISON.md](./CAD_COMPARISON.md)** - Feature comparison with AutoCAD/Fusion 360
 - **[COLOR_CAPABILITIES.md](./COLOR_CAPABILITIES.md)** - Canvas Color display capabilities
-- **[RESOURCES.md](./RESOURCES.md)** - Development resources
+- **[ADVANCED_LINE_TOOLS.md](./ADVANCED_LINE_TOOLS.md)** - Advanced line tools documentation
+- **[RESOURCES.md](./RESOURCES.md)** - Development resources and links
+- **[SAFETY_REVIEW.md](./SAFETY_REVIEW.md)** - Code safety and integrity review
+- **[APP_VS_OS_MODIFICATION.md](./APP_VS_OS_MODIFICATION.md)** - Application vs OS modification explanation
 
 ## Important Notes
 

@@ -81,7 +81,7 @@ make -j$(nproc)
 ./deploy-remarkable.sh
 
 # Or manually:
-scp build/drafting-pro root@10.11.99.1:/opt/drafting-pro/
+scp build/recadpro root@10.11.99.1:/opt/recadpro/
 ```
 
 ## Running on reMarkable Paper Pro
@@ -100,8 +100,8 @@ scp build/drafting-pro root@10.11.99.1:/opt/drafting-pro/
 
 3. **Run application**:
    ```bash
-   cd /opt/drafting-pro
-   QT_QUICK_BACKEND=epaper ./drafting-pro -platform epaper
+   cd /opt/recadpro
+   QT_QUICK_BACKEND=epaper ./recadpro -platform epaper
    ```
 
 4. **After testing, restart xochitl**:

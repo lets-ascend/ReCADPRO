@@ -6,6 +6,8 @@
 #include <QFileInfo>
 #include <QDir>
 #include <QVariantList>
+#include <QStorageInfo>
+#include <QThread>
 #include <QDebug>
 
 ProjectFile::ProjectFile(QObject *parent)
@@ -27,21 +29,60 @@ bool ProjectFile::saveProject(const QUrl &fileUrl, const QVariantMap &projectDat
     QFileInfo fileInfo(filePath);
     QDir dir = fileInfo.absoluteDir();
     if (!dir.exists()) {
-        dir.mkpath(".");
+        if (!dir.mkpath(".")) {
+            emit error("Cannot create directory: " + dir.absolutePath());
+            return false;
+        }
+    }
+    
+    // Check available disk space (rough estimate - need at least 10MB)
+    QStorageInfo storage(dir);
+    if (storage.isValid() && storage.bytesAvailable() < 10 * 1024 * 1024) {
+        emit error("Insufficient disk space");
+        return false;
     }
     
     // Convert to JSON
     QJsonObject jsonObject = QJsonObject::fromVariantMap(projectData);
     QJsonDocument doc(jsonObject);
+    QByteArray jsonData = doc.toJson();
     
-    QFile file(filePath);
-    if (!file.open(QIODevice::WriteOnly)) {
-        emit error("Cannot open file for writing: " + filePath);
+    // Limit JSON size (100MB max)
+    static const qint64 MAX_JSON_SIZE = 100 * 1024 * 1024;
+    if (jsonData.size() > MAX_JSON_SIZE) {
+        emit error("Project data too large (max 100MB)");
         return false;
     }
     
-    file.write(doc.toJson());
+    // Retry file write (up to 3 attempts)
+    QFile file(filePath);
+    int retries = 3;
+    bool opened = false;
+    
+    while (retries > 0 && !opened) {
+        if (file.open(QIODevice::WriteOnly)) {
+            opened = true;
+            break;
+        }
+        retries--;
+        if (retries > 0) {
+            QThread::msleep(100); // Wait 100ms before retry
+        }
+    }
+    
+    if (!opened) {
+        emit error("Cannot open file for writing after retries: " + filePath);
+        return false;
+    }
+    
+    // Write data
+    qint64 bytesWritten = file.write(jsonData);
     file.close();
+    
+    if (bytesWritten != jsonData.size()) {
+        emit error("Failed to write all data to file");
+        return false;
+    }
     
     emit saveProgress(100);
     emit saveFinished(true, filePath);

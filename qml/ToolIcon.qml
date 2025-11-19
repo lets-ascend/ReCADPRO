@@ -118,6 +118,20 @@ Rectangle {
                     ctx.stroke();
                     break;
                     
+                case "arc":
+                    // Arc icon - curved line segment
+                    ctx.beginPath();
+                    ctx.arc(centerX, centerY, 8, Math.PI * 0.25, Math.PI * 0.75);
+                    ctx.stroke();
+                    // Add small markers at endpoints
+                    ctx.beginPath();
+                    ctx.arc(centerX + 5.66, centerY - 5.66, 2, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.arc(centerX - 5.66, centerY - 5.66, 2, 0, Math.PI * 2);
+                    ctx.fill();
+                    break;
+                    
                 case "arrow":
                     // Arrow icon
                     ctx.beginPath();
@@ -145,6 +159,32 @@ Rectangle {
                     ctx.moveTo(centerX + 2, centerY);
                     ctx.lineTo(centerX + 6, centerY + 4);
                     ctx.lineTo(centerX + 4, centerY + 2);
+                    ctx.stroke();
+                    break;
+                    
+                case "pan":
+                    // Pan tool icon - hand/pan symbol
+                    ctx.strokeStyle = iconRoot.iconColor;
+                    ctx.fillStyle = iconRoot.iconColor;
+                    ctx.lineWidth = 2;
+                    // Draw hand/pan symbol (simplified)
+                    ctx.beginPath();
+                    ctx.moveTo(8, 18);
+                    ctx.lineTo(6, 14);
+                    ctx.lineTo(8, 12);
+                    ctx.lineTo(10, 14);
+                    ctx.lineTo(12, 12);
+                    ctx.lineTo(14, 14);
+                    ctx.lineTo(16, 12);
+                    ctx.lineTo(16, 18);
+                    ctx.closePath();
+                    ctx.fill();
+                    // Draw arrow indicating pan direction
+                    ctx.beginPath();
+                    ctx.moveTo(12, 8);
+                    ctx.lineTo(16, 6);
+                    ctx.moveTo(12, 8);
+                    ctx.lineTo(16, 10);
                     ctx.stroke();
                     break;
                     
