@@ -5,20 +5,24 @@ Qt5 is installed but Qt5Config.cmake is missing. CMake needs this file to find Q
 
 ## Solution: Create Qt5Config.cmake
 
-### Step 1: Run the Creation Script
+### Step 1: Run a Creation Script
 
+**Option A – autodetect paths:**  
 ```bash
-# Make it executable
 chmod +x create-qt5-config.sh
-
-# Run it
 ./create-qt5-config.sh
 ```
 
-The script will:
-1. Find where Qt5 is installed
-2. Create the missing Qt5Config.cmake file
-3. Tell you what command to run next
+**Option B – Yocto-aware (preferred for SDK builds):**  
+```bash
+chmod +x create-qt5-config-yocto.sh
+./create-qt5-config-yocto.sh
+```
+
+Both scripts will:
+1. Detect the Qt5 install prefix inside the Yocto SDK
+2. Create a full `Qt5Config.cmake` under `lib/cmake/Qt5`
+3. Print the exact `cmake` command to run next
 
 ### Step 2: Run CMake
 
@@ -90,4 +94,5 @@ sudo ./create-qt5-config.sh
 - Make sure you use the CMAKE_PREFIX_PATH from the script
 - Verify Qt5 libraries actually exist
 - Check that the path is correct
+
 
