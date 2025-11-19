@@ -41,6 +41,13 @@ endif()
 
 find_package(Qt5 REQUIRED COMPONENTS Quick Core Gui Qml QuickControls2)
 
+# Ensure legacy Qt5 helper macros (qt5_add_resources, etc.) are available
+if(EXISTS "${Qt5Core_DIR}/Qt5CoreMacros.cmake")
+    include("${Qt5Core_DIR}/Qt5CoreMacros.cmake")
+else()
+    message(WARNING "Qt5CoreMacros.cmake not found; qt5_add_resources may be unavailable")
+endif()
+
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
